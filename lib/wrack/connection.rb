@@ -1,5 +1,5 @@
 # class: Connection
-# 
+#
 # Handles the raw details of a tcp socket
 #
 require 'socket'
@@ -40,9 +40,23 @@ class Wrack
 
     # Takes either an object that responds to a callback
     # or a block that receives a single argument
-    def register_callback(type, callback = nil, &block)
-      blob = (callback || block)
-      @callbacks[type] << blob
+    def register_callback(callback_type, options = {}, &block)
+
+      # Validate type
+      case callback_type
+      when Array
+        # If we've been given an array of types to apply the callback,
+        # recursively call them all
+        # FIXME Return early? Really?
+        return callback_type.each { |sym| register_callback(sym, options) }
+      when Symbol
+        unless [:read, :write, :err].include? callback_type
+          raise ArgumentError, "register_callback requires a callback_type of either :read, :write, :err, or array thereof."
+        end
+      end
+
+      blob = (options[:callback] || block)
+      @callbacks[callback_type] << blob
     end
 
     def write(msg)
