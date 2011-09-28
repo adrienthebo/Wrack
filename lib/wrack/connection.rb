@@ -1,11 +1,12 @@
 # class: Connection
 #
-# Handles the raw details of a tcp socket
-#
+# This class handles the low level details of a tcp socket. It's a barebones
+# pluggable system that pushes all implementation details into callbacks
 require 'socket'
 class Wrack
   class Connection
     attr_accessor :server, :port, :options
+
     def initialize(server="", port=6667, options={})
       @server = server
       @port   = port
@@ -35,14 +36,12 @@ class Wrack
       @connected = false
     end
 
-    # Are we connected?
-    # This is kind of optimistic. Phucket.
     def connected?
       @connected
     end
 
-    # Takes either an object that responds to a callback
-    # or a block that receives a single argument
+    # Takes either an object that responds to a callback or a block that
+    # receives a single argument
     def register_callback(callback_type, options = {}, &block)
 
       # Validate type
