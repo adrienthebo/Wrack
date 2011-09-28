@@ -22,10 +22,10 @@ class Wrack
       @connection = TCPSocket.new(server, port)
       if @connection
         @connected = true
-      end
 
-      %w{INT TERM QUIT}.each do |sig|
-        trap sig { disconnect }
+        %w{INT TERM QUIT}.each do |sig|
+          trap sig { disconnect }
+        end
       end
     end
 
