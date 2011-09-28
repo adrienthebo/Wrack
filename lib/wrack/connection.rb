@@ -22,7 +22,10 @@ class Wrack
       if @connection
         @connected = true
       end
-      # FIXME handle signals
+
+      %w{INT TERM QUIT}.each do |sig|
+        trap sig { disconnect }
+      end
     end
 
     # Drop the connection to the server cleanly
