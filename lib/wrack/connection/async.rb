@@ -18,10 +18,14 @@ module Wrack
     private
 
     # Reimpements the fire_callbacks to be threaded.
-    def fire_callbacks(type, msg)
-      @callbacks[type].each do |callback|
+    def fire_callback(callback, msg)
       Thread.new do
-        callback.call(self, msg)
+        begin
+          callback.call(self, msg)
+        rescue => details
+          $stderr.puts "Error with callback #{callback}: #{details}"
+          $stderr.puts details.backtrace
+        end
       end
     end
   end

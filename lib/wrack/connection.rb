@@ -84,14 +84,20 @@ class Wrack
 
     private
 
+    # TODO Add the ability to pass a module/class/block to this and have
+    # The Right Thing be done. Also, do threading at this level perhaps?
+    def fire_callback(callback, msg)
+      begin
+        callback.call(self, msg)
+      rescue => details
+        $stderr.puts "Error with callback #{callback}: #{details}"
+        $stderr.puts details.backtrace
+      end
+    end
+
     def fire_callbacks(type, msg)
       @callbacks[type].each do |callback|
-        begin
-          callback.call(self, msg)
-        rescue => details
-          $stderr.puts "Error with callback #{callback}: #{details}"
-          $stderr.puts details.backtrace
-        end
+        fire_callback(callback, msg)
       end
     end
   end
