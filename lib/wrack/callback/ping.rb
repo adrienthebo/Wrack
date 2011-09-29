@@ -4,7 +4,7 @@ class Wrack
       def call(connection, msg)
         if msg =~ /^PING :(.*)/i
           servers = $1.split(" ")
-          connection.write("PONG #{servers[0]")
+          connection.write("PONG #{servers[0]}")
         end
       end
     end
