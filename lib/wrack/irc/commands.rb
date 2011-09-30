@@ -34,13 +34,10 @@ module Wrack
         @connection.write("PART #{channel}")
       end
 
-      def mode(type, mode)
+      def mode(target, mode)
         # TODO validate type and fail appropriately
         # if user, perhaps autofill that value?
-        case type
-        when :user, :channel
-          @connection.write("MODE #{type} #{mode}")
-        end
+        @connection.write("MODE #{target} #{mode}")
       end
 
       # This is part of the standard, but it's not relevant to my interests

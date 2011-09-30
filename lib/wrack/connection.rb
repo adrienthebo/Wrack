@@ -23,8 +23,10 @@ module Wrack
       if @connection
         @connected = true
 
-        %w{INT TERM QUIT}.each do |sig|
-          trap sig { disconnect }
+        %w{INT TERM QUIT}.each do |signal|
+          Signal.trap(signal) do
+            disconnect
+          end
         end
       end
     end
