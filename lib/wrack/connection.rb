@@ -26,6 +26,7 @@ module Wrack
         %w{INT TERM QUIT}.each do |signal|
           Signal.trap(signal) do
             disconnect
+            Signal.trap(signal, "DEFAULT")
           end
         end
       end
