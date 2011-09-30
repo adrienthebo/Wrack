@@ -34,43 +34,24 @@ module Wrack
 
     # Drop the connection to the server cleanly
     def disconnect
-      @connection.close
-      @connection = nil
-      @connected = false
+      if @connection
+        @connection.close
+        @connection = nil
+        @connected = false
+      end
     end
 
     def connected?
       @connected
     end
-
-    # Takes either an object that responds to a callback or a block that
-    # receives a single argument
-    def register_callback(callback_type, options = {}, &block)
-
-      # Validate type
-      case callback_type
-      when Array
-        # If we've been given an array of types to apply the callback,
-        # recursively call them all
-        # FIXME Return early? Really?
-        return callback_type.each { |sym| register_callback(sym, options) }
-      when Symbol
-        unless [:read, :write, :err].include? callback_type
-          raise ArgumentError, "register_callback requires a callback_type of either :read, :write, :err, or array thereof."
-        end
-      end
-
-      blob = (options[:callback] || block)
-      @callbacks[callback_type] << blob
-    end
-
-    def write(msg)
-      fire_callbacks(:write, msg)
-      @connection.puts(msg)
+    def write(raw)
+      fire_callbacks(:write, raw)
+      @connection.puts(raw)
     end
 
     # Poll socket for messages.
     def poll
+      return nil unless connected?
       rsock, wsock, esock = Kernel.select([@connection], nil, [@connection], options[:select_timeout])
 
       if esock.length > 0
@@ -80,27 +61,51 @@ module Wrack
       end
 
       if rsock.length > 0
-        msg = rsock[0].gets
-        fire_callbacks(:read, msg)
+        raw = rsock[0].gets
+        fire_callbacks(:read, raw)
       end
+    end
+
+    # Takes either an object that responds to a callback or a block that
+    # receives a single argument
+    def register_callback(callback_type, options = {}, &block)
+      # Validate type
+      case callback_type
+      when Array
+        # If we've been given an array of types to apply the callback,
+        # recursively call them all
+        # FIXME Return early? Really?
+        return callback_type.each { |sym| register_callback(sym, options, &block) }
+      when Symbol
+        unless [:read, :write, :err].include? callback_type
+          raise ArgumentError, "register_callback requires a callback_type of either :read, :write, :err, or array thereof."
+        end
+      end
+
+      blob = if block_given?
+        block
+      else
+        options[:callback]
+      end
+      @callbacks[callback_type] << blob
     end
 
     private
 
     # TODO Add the ability to pass a module/class/block to this and have
-    # The Right Thing be done. Also, do threading at this level perhaps?
-    def fire_callback(callback, msg)
+    # The Right Thing be done.
+    def fire_callback(callback, raw)
       begin
-        callback.call(self, msg)
+        callback.call(self, raw)
       rescue => details
         $stderr.puts "Error with callback #{callback}: #{details}"
         $stderr.puts details.backtrace
       end
     end
 
-    def fire_callbacks(type, msg)
+    def fire_callbacks(type, raw)
       @callbacks[type].each do |callback|
-        fire_callback(callback, msg)
+        fire_callback(callback, raw)
       end
     end
   end

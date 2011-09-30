@@ -5,12 +5,13 @@
 #
 # Perhaps a worker pool would be the correct model for this. Perhaps not.
 require 'thread'
+require 'wrack'
 module Wrack
   class Connection
     def background!
       Thread.new do
         loop do
-          poll
+          poll while connected?
         end
       end
     end
