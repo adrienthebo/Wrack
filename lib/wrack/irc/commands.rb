@@ -1,5 +1,5 @@
 # Basic IRC commands as defined by RFC 1459
-class Wrack
+module Wrack
   module IRC
     module Commands
 

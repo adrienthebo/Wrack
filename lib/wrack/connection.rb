@@ -3,7 +3,7 @@
 # This class handles the low level details of a tcp socket. It's a barebones
 # pluggable system that pushes all implementation details into callbacks
 require 'socket'
-class Wrack
+module Wrack
   class Connection
     attr_accessor :server, :port, :options
 

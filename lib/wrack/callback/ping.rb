@@ -1,4 +1,4 @@
-class Wrack
+module Wrack
   module Callback
     class Ping
       def call(connection, msg)

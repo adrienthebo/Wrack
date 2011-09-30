@@ -1,5 +1,5 @@
 # Generates wrapper objects
-class Wrack
+module Wrack
   module IRC
     class Message
       attr_reader :prefix, :command, :params

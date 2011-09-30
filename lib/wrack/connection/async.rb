@@ -15,7 +15,7 @@ module Wrack
       end
     end
 
-    private
+    protected
 
     # Reimpements the fire_callbacks to be threaded.
     def fire_callback(callback, msg)
