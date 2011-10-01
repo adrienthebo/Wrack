@@ -10,9 +10,7 @@ module Wrack
   class Connection
     def background!
       Thread.new do
-        loop do
-          poll while connected?
-        end
+        poll while connected?
       end
     end
 

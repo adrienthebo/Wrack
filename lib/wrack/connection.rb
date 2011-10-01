@@ -61,7 +61,7 @@ module Wrack
       end
 
       if rsock.length > 0
-        raw = rsock[0].gets
+        raw = rsock[0].gets.chomp
         fire_callbacks(:read, raw)
       end
     end
