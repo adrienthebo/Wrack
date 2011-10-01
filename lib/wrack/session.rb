@@ -13,22 +13,10 @@ module Wrack
       @callbacks  = {}
 
       # See if we should turn on logging
-      if options[:logging]
-        @connection.register_callback [:read, :write] do |connection, raw|
-          puts raw
-        end
-      end
+      register_logger if options[:logging]
 
       # Initialize IRC level callback mechanism
-      @connection.register_callback(:read) do |connection, raw|
-        message = Wrack::IRC::Message.parse(raw)
-
-        if @callbacks[message.command]
-          @callbacks[message.command].each do |callback|
-            callback.call(message)
-          end
-        end
-      end
+      register_message_handler
 
       on :ping do |msg|
         pong(msg.params)
@@ -40,8 +28,31 @@ module Wrack
     end
 
     def on(command, options = {}, &block)
+      callback = Wrack::IRC::Callback.new(command, options, &block)
       @callbacks[command] ||= []
-      @callbacks[command] << block
+      @callbacks[command] << callback
+    end
+
+    private
+
+    def register_logger
+      @connection.register_callback [:read, :write] do |connection, raw|
+        puts raw
+      end
+    end
+
+    def register_message_handler
+      @connection.register_callback(:read) do |connection, raw|
+        message = Wrack::IRC::Message.parse(raw)
+
+        if !message
+          $stderr.puts "THIS IS A SHIT MESSAGE. FIX ME"
+        elsif @callbacks[message.command]
+          @callbacks[message.command].each do |callback|
+            callback.notify(message)
+          end
+        end
+      end
     end
   end
 end
