@@ -12,16 +12,12 @@ module Wrack
       @port   = port
       @options = options
       @callbacks = {:read => [], :write => [], :err => []}
-
-      @connected = false
-
     end
 
     # Attempts to establish a tcp connection
     def connect
       @connection = TCPSocket.new(server, port)
       if @connection
-        @connected = true
 
         %w{INT TERM QUIT}.each do |signal|
           Signal.trap(signal) do
@@ -34,16 +30,16 @@ module Wrack
 
     # Drop the connection to the server cleanly
     def disconnect
-      if @connection
+      if connected?
         @connection.close
         @connection = nil
-        @connected = false
       end
     end
 
     def connected?
-      @connected
+      @connection and not @connection.closed?
     end
+
     def write(raw)
       fire_callbacks(:write, raw)
       @connection.puts(raw)
@@ -51,18 +47,21 @@ module Wrack
 
     # Poll socket for messages.
     def poll
-      return nil unless connected?
-      rsock, wsock, esock = Kernel.select([@connection], nil, [@connection], options[:select_timeout])
+      begin
+        rsock, wsock, esock = Kernel.select([@connection], nil, [@connection], options[:select_timeout])
 
-      if esock.length > 0
-        # XXX This is shit. Fix.
-        $stderr.puts("Generic vague socket error message!")
-        disconnect
-      end
+        if esock.length > 0
+          # XXX This is shit. Fix.
+          $stderr.puts("Generic vague socket error message!")
+          disconnect
+        end
 
-      if rsock.length > 0
-        raw = rsock[0].gets.chomp
-        fire_callbacks(:read, raw)
+        if rsock.length > 0
+          raw = rsock[0].gets.chomp
+          fire_callbacks(:read, raw)
+        end
+      rescue IOError
+        puts "Socket got face stabbed"
       end
     end
 

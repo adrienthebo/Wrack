@@ -27,6 +27,11 @@ module Wrack
       @connection.connect
     end
 
+    def disconnect
+      quit
+      @connection.disconnect
+    end
+
     def on(command, options = {}, &block)
       callback = Wrack::IRC::Callback.new(command, options, &block)
       @callbacks[command] ||= []
