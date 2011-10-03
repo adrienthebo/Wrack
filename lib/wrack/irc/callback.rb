@@ -1,5 +1,7 @@
 # IRC level callback
 #
+# Generates a wrapper for a block that determines if a particular irc callback
+# should be triggered given a particular message
 # Given an irc message
 module Wrack
   module IRC

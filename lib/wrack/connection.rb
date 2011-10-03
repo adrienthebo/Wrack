@@ -54,6 +54,7 @@ module Wrack
           # XXX This is shit. Fix.
           $stderr.puts("Generic vague socket error message!")
           disconnect
+          nil
         end
 
         if rsock.length > 0
@@ -61,7 +62,7 @@ module Wrack
           fire_callbacks(:read, raw)
         end
       rescue IOError
-        puts "Socket got face stabbed"
+        nil
       end
     end
 
