@@ -11,6 +11,7 @@ module Wrack
     def initialize(options = {})
       @connection = (options[:connection] || Wrack::Connection).send(:new)
       @callbacks  = {}
+      @receivers  = []
 
       # See if we should turn on logging
       register_logger if options[:logging]
@@ -32,6 +33,11 @@ module Wrack
       @connection.disconnect
     end
 
+    def receive(&block)
+      receiver = Wrack::IRC::Receiver.new(&block)
+      @receivers << receiver
+    end
+
     def on(command, options = {}, &block)
       callback = Wrack::IRC::Callback.new(command, options, &block)
       @callbacks[command] ||= []
@@ -50,12 +56,17 @@ module Wrack
       @connection.register_callback(:read) do |connection, raw|
         message = Wrack::IRC::Message.parse(raw)
 
-        if !message
+        if message.nil?
           $stderr.puts "THIS IS A SHIT MESSAGE. FIX ME"
-        elsif @callbacks[message.command]
-          @callbacks[message.command].each do |callback|
-            callback.notify(message)
+        else
+          if @callbacks[message.command]
+            @callbacks[message.command].each do |callback|
+              callback.notify(message)
+            end
           end
+
+          puts "going to call receivers with message #{message.inspect}"
+          @receivers.each {|receiver| receiver.notify(message) }
         end
       end
     end

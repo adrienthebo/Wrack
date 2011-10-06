@@ -3,3 +3,4 @@
 require 'wrack/irc/commands'
 require 'wrack/irc/message'
 require 'wrack/irc/callback'
+require 'wrack/irc/receiver'
