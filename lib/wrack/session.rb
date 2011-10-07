@@ -34,7 +34,7 @@ module Wrack
     end
 
     def receive(&block)
-      receiver = Wrack::IRC::Receiver.new(&block)
+      receiver = Wrack::IRC::Receiver.new(@connection, &block)
       @receivers << receiver
     end
 
@@ -54,19 +54,21 @@ module Wrack
 
     def register_message_handler
       @connection.register_callback(:read) do |connection, raw|
-        message = Wrack::IRC::Message.parse(raw)
+        if message = Wrack::IRC::Message.parse(raw)
 
-        if message.nil?
-          $stderr.puts "THIS IS A SHIT MESSAGE. FIX ME"
-        else
+          # Check to see if we have any standalone callbacks that respond to
+          # this message, and if so call them.
+          #
+          # This extra validation is necessary since callbacks can be
+          # registered for arbitrary message types
           if @callbacks[message.command]
-            @callbacks[message.command].each do |callback|
-              callback.notify(message)
-            end
+            @callbacks[message.command].each {|callback| callback.notify(message) }
           end
 
-          puts "going to call receivers with message #{message.inspect}"
+          # Call all receivers on this message.
           @receivers.each {|receiver| receiver.notify(message) }
+        else
+          $stderr.puts "Mangled message received: #{raw}"
         end
       end
     end
