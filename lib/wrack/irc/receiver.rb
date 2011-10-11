@@ -2,15 +2,19 @@
 class Wrack::IRC::Receiver
   include Wrack::IRC::Commands
 
-  def initialize(connection, &block)
+  def initialize(connection, context, options = {}, &block)
+    @context      = context
+    @connection   = connection
+
     @restrictions = []
     @matches      = []
-    @connection   = connection
+
+    restrict options
     instance_eval &block
   end
 
-  def receive(&block)
-    receiver = Wrack::IRC::Receiver.new(@connection, &block)
+  def receive(options = {}, &block)
+    receiver = Wrack::IRC::Receiver.new(@connection, @context, options, &block)
     @matches << receiver
   end
 
@@ -57,7 +61,7 @@ class Wrack::IRC::Receiver
           if match.is_a? Wrack::IRC::Receiver
             match.notify msg
           else
-            match.call(msg)
+            @context.instance_exec msg, &match
           end
         rescue => e
           $stderr.puts "Aborted while calling match!"

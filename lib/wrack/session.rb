@@ -1,7 +1,5 @@
-# The actual IRC implementation class. Pulls in the connection and IRC
-# implementation details
-#
-# If you're looking for a complete bot, this should be the place
+# Assembles the higher level components of an IRC connection on top of a raw
+# socket. Manages callbacks and maintains the connection.
 require 'wrack'
 require 'wrack/irc'
 module Wrack
@@ -33,8 +31,8 @@ module Wrack
       @connection.disconnect
     end
 
-    def receive(&block)
-      receiver = Wrack::IRC::Receiver.new(@connection, &block)
+    def receive(context, &block)
+      receiver = Wrack::IRC::Receiver.new(@connection, context, &block)
       @receivers << receiver
     end
 
