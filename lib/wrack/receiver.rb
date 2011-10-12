@@ -1,10 +1,7 @@
 
 class Wrack::Receiver
-  include Wrack::IRC::Commands
-
-  def initialize(connection, context, options = {}, &block)
+  def initialize(context, options = {}, &block)
     @context      = context
-    @connection   = connection
 
     @restrictions = []
     @matches      = []
@@ -14,7 +11,7 @@ class Wrack::Receiver
   end
 
   def receive(options = {}, &block)
-    receiver = Wrack::Receiver.new(@connection, @context, options, &block)
+    receiver = Wrack::Receiver.new(@context, options, &block)
     @matches << receiver
   end
 
