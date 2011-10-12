@@ -5,6 +5,7 @@ class Wrack::Receiver
 
     @restrictions = []
     @matches      = []
+    @receivers    = []
 
     restrict options
     instance_eval &block
@@ -12,7 +13,7 @@ class Wrack::Receiver
 
   def receive(options = {}, &block)
     receiver = Wrack::Receiver.new(@context, options, &block)
-    @matches << receiver
+    @receivers << receiver
   end
 
   # Add restrictions to this receiver. Accepts an optional hash of options
@@ -53,18 +54,12 @@ class Wrack::Receiver
 
   def notify(msg)
     if @restrictions.all? {|restriction| restriction.call(msg) }
-      @matches.each do |match|
-        begin
-          if match.is_a? Wrack::Receiver
-            match.notify msg
-          else
-            @context.instance_exec msg, &match
-          end
-        rescue => e
-          $stderr.puts "Aborted while calling match!"
-          $stderr.puts e
-          $stderr.puts e.backtrace
-        end
+      begin
+        @matches.each {|match| @context.instance_exec(msg, &match) }
+        @receivers.each {|receiver| receiver.notify(msg) }
+      rescue => e
+        $stderr.puts e
+        $stderr.puts e.backtrace
       end
     end
   end
