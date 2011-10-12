@@ -32,7 +32,7 @@ module Wrack
     end
 
     def receive(context, &block)
-      receiver = Wrack::IRC::Receiver.new(@connection, context, &block)
+      receiver = Wrack::Receiver.new(@connection, context, &block)
       @receivers << receiver
     end
 

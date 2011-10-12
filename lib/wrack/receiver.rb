@@ -1,5 +1,5 @@
 
-class Wrack::IRC::Receiver
+class Wrack::Receiver
   include Wrack::IRC::Commands
 
   def initialize(connection, context, options = {}, &block)
@@ -14,7 +14,7 @@ class Wrack::IRC::Receiver
   end
 
   def receive(options = {}, &block)
-    receiver = Wrack::IRC::Receiver.new(@connection, @context, options, &block)
+    receiver = Wrack::Receiver.new(@connection, @context, options, &block)
     @matches << receiver
   end
 
@@ -58,7 +58,7 @@ class Wrack::IRC::Receiver
     if @restrictions.all? {|restriction| restriction.call(msg) }
       @matches.each do |match|
         begin
-          if match.is_a? Wrack::IRC::Receiver
+          if match.is_a? Wrack::Receiver
             match.notify msg
           else
             @context.instance_exec msg, &match
