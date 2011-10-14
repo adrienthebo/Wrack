@@ -1,4 +1,6 @@
-
+# Handles routing of IRC messages to all interested parties.
+#
+# Forms a tree structure that can be used to add incremental filtering
 class Wrack::Receiver
   def initialize(context, options = {}, &block)
     @context      = context

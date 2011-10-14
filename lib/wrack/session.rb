@@ -27,7 +27,6 @@ module Wrack
     end
 
     def disconnect
-      quit
       @connection.disconnect
     end
 
