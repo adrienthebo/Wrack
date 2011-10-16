@@ -1,5 +1,5 @@
-# Assembles the higher level components of an IRC connection on top of a raw
-# socket. Manages callbacks and maintains the connection.
+# Abstraction on top of a raw Wrack::Connection to manage IRC level
+# callbacks
 require 'wrack'
 require 'wrack/irc'
 module Wrack
@@ -17,11 +17,13 @@ module Wrack
       # Initialize IRC level callback mechanism
       register_message_handler
 
+      # XXX REMOVE ME
       on :ping do |msg|
         pong(msg.params)
       end
     end
 
+    # XXX REMOVE ME
     def connect
       @connection.connect
     end
@@ -35,6 +37,7 @@ module Wrack
       @receivers << receiver
     end
 
+    # XXX REMOVE ME
     def on(command, options = {}, &block)
       callback = Wrack::IRC::Callback.new(command, options, &block)
       @callbacks[command] ||= []

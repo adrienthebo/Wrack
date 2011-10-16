@@ -62,6 +62,7 @@ module Wrack
 
     # Takes either an object that responds to a callback or a block that
     # receives a single argument
+    # XXX Remove array callback_type to simplify this method?
     def register_callback(callback_type, options = {}, &block)
       # Validate type
       case callback_type
@@ -103,6 +104,10 @@ module Wrack
       end
     end
 
+    # Convenience method to set signal handlers to terminate a connection
+    # This is implemented outside of the connect method so that classes
+    # reimplementing the connect method can just call this instead of calling
+    # the super method
     def set_signals
       %w{INT TERM QUIT}.each do |signal|
         Signal.trap(signal) do
