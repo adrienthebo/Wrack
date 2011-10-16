@@ -36,7 +36,7 @@ module Wrack
 
     def write(raw)
       fire_callbacks(:write, raw)
-      @connection.puts(raw)
+      @connection.print raw, "\r\n"
     end
 
     # Poll socket for messages.
