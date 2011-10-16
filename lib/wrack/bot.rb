@@ -5,17 +5,17 @@
 
 require 'wrack'
 require 'wrack/connection'
-require 'wrack/session'
+require 'wrack/pluginmanager'
 
 module Wrack
   class Bot
     def initialize(&block)
       Struct.new("Server", :server, :port, :ssl)
       Struct.new("User", :realname, :hostname, :servername, :fullname)
-      @server     = Struct::Server.new
-      @user       = Struct::User.new
-      @klasses    = []
-      @plugins    = []
+      @server  = Struct::Server.new
+      @user    = Struct::User.new
+      @klasses = []
+      @plugins = []
 
       configure &block if block_given?
     end
@@ -38,24 +38,28 @@ module Wrack
     end
 
     def run!
-      connection = Wrack::Connection.new
-      connection.server = @server.server
-      connection.port   = @server.port
+      @connection = Wrack::Connection.new
+      @connection.server = @server.server
+      @connection.port   = @server.port
 
-      @session = Wrack::Session.new(:logging => true, :connection => connection)
-      @session.connect
+      @manager = Wrack::PluginManager.new(:logging => true, :connection => @connection)
+
 
       reload_plugins!
     end
 
     def reload_plugins!
-      # XXX Destroy all plugins
+      @plugins.each do |plugin|
+        @manager.unregister_plugin plugin
+        @plugins.delete plugin
+      end
 
       # Instantiate all plugins
       @klasses.each do |klass|
         plugin = klass.new
-        plugin.bot = self
+        plugin.connection = @connection
 
+        @manager.register_plugin plugin
         @plugins << plugin
       end
     end

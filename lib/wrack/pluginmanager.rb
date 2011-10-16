@@ -1,41 +1,34 @@
-# Abstraction on top of a raw Wrack::Connection to manage IRC level
-# callbacks
+# Abstraction on top of a raw Wrack::Connection to manage IRC plugins
 require 'wrack'
 require 'wrack/irc'
 module Wrack
-  class Session
+  class PluginManager
     include Wrack::IRC::Commands
 
     attr_reader :connection
     def initialize(options = {})
       @connection = (options[:connection] || Wrack::Connection.new)
-      @receivers  = []
+      @plugins    = []
 
       # See if we should turn on logging
       register_logger if options[:logging]
 
       # Initialize IRC level callback mechanism
-      register_message_handler
+      register_read_handler
     end
 
-    # XXX REMOVE ME
-    def connect
-      @connection.connect
+    def register_plugin(plugin)
+      @plugins << plugin
     end
 
-    def disconnect
-      @connection.disconnect
-    end
-
-    def receive(context, &block)
-      receiver = Wrack::Receiver.new(context, &block)
-      @receivers << receiver
+    def unregister_plugin(plugin)
+      @plugins.delete plugin
     end
 
     private
 
     def register_logger
-      @connection.register_callback [:read, :write] {|connection, raw| puts raw }
+      @connection.register_callback([:read, :write]) {|connection, raw| puts raw }
     end
 
     def register_read_handler
@@ -44,8 +37,9 @@ module Wrack
 
     def on_read(raw)
       if message = Wrack::IRC::Message.parse(raw)
-        # Call all receivers on this message.
-        @receivers.each {|receiver| receiver.notify(message) }
+        @plugins.each do |plugin|
+          plugin.receivers.each {|receiver| receiver.notify(message) }
+        end
       else
         $stderr.puts "Mangled message received: #{raw}"
       end

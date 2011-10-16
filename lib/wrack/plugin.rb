@@ -8,7 +8,6 @@
 
 require 'wrack/irc'
 require 'wrack/receiver'
-require 'wrack/pluginbase'
 
 module Wrack
 
@@ -26,10 +25,10 @@ module Wrack
   end
 
   module Plugin
-    # Does this need to include the following to make plugins automagic?
     include Wrack::IRC::Commands
 
-    # Register all plugins upon creation
+    # Modify all plugins to include the class level methods, and register
+    # them for subsequent lookup
     def self.included(klass)
       klass.extend Wrack::PluginBase
       @klasses ||= []
@@ -41,8 +40,11 @@ module Wrack
       @klasses.dup
     end
 
-    attr_accessor :bot
+    attr_accessor :receivers
+    attr_accessor :connection
 
+    # Defines a default constructor to copy all receivers generated during
+    # class instantiation into the object
     def initialize(restrictions = {})
       @receivers = []
       self.class.bare_receivers.each do |r|
@@ -50,7 +52,7 @@ module Wrack
         receiver = Wrack::Receiver.new(self, r[:options], &r[:block])
         @receivers << receiver
       end
-      @restrctions = restrictions
+      @restrictions = restrictions
     end
   end
 end
