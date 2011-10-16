@@ -2,4 +2,3 @@
 # RFC 1459 spec and helper functionality
 require 'wrack/irc/commands'
 require 'wrack/irc/message'
-require 'wrack/irc/callback'
