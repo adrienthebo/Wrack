@@ -5,16 +5,16 @@ module Wrack
 
       # 4.1 Connection registration
       def nick(nick)
-        @connection.write("NICK #{nick}")
+        connection.write("NICK #{nick}")
       end
 
       def user(username, hostname, servername, fullname)
-        @connection.write("USER #{username} #{hostname} #{servername} :#{fullname}")
+        connection.write("USER #{username} #{hostname} #{servername} :#{fullname}")
       end
 
       def quit(msg = nil)
-        @connection.write("QUIT" + (msg ? " :#{msg}" : ""))
-        @connection.disconnect
+        connection.write("QUIT" + (msg ? " :#{msg}" : ""))
+        connection.disconnect
       end
 
       # This is part of the standard, but it's not relevant to my interests
@@ -27,17 +27,17 @@ module Wrack
 
       # 4.2 Channel operation
       def join(channel, key = nil)
-        @connection.write("JOIN #{channel}" + (key ? " #{key}" : ""))
+        connection.write("JOIN #{channel}" + (key ? " #{key}" : ""))
       end
 
       def part(channel)
-        @connection.write("PART #{channel}")
+        connection.write("PART #{channel}")
       end
 
       def mode(target, mode)
         # TODO validate type and fail appropriately
         # if user, perhaps autofill that value?
-        @connection.write("MODE #{target} #{mode}")
+        connection.write("MODE #{target} #{mode}")
       end
 
       # This is part of the standard, but it's not relevant to my interests
@@ -54,11 +54,11 @@ module Wrack
       # 4.4 Sending messages
 
       def privmsg(recipient, msg)
-        @connection.write("PRIVMSG #{recipient} :#{msg}")
+        connection.write("PRIVMSG #{recipient} :#{msg}")
       end
 
       def notice(recipient, msg)
-        @connection.write("NOTICE #{recipient} :#{msg}")
+        connection.write("NOTICE #{recipient} :#{msg}")
       end
 
       # 4.5 User based queries
@@ -67,7 +67,7 @@ module Wrack
       # 4.6 Miscellaneous messages
 
       def pong(server)
-        @connection.write("PONG #{server}")
+        connection.write("PONG #{server}")
       end
     end
   end

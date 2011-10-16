@@ -6,6 +6,7 @@ module Wrack
   class Session
     include Wrack::IRC::Commands
 
+    attr_reader :connection
     def initialize(options = {})
       @connection = (options[:connection] || Wrack::Connection.new)
       @receivers  = []
