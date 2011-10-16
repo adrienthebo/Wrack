@@ -11,6 +11,20 @@ require 'wrack/receiver'
 require 'wrack/pluginbase'
 
 module Wrack
+
+  # Defines the class methods that backs plugin generated
+  #
+  # This is necessary to make the class level DSL function
+  module PluginBase
+    attr_reader :bare_receivers
+    def receive(options = {}, &block)
+      # XXX will the self context be all fucked for this?
+      # Do we need to pass in the instance that is defined in, somehow?
+      @bare_receivers ||= []
+      @bare_receivers << {:options => options, :block => block}
+    end
+  end
+
   module Plugin
     # Does this need to include the following to make plugins automagic?
     include Wrack::IRC::Commands
