@@ -35,8 +35,7 @@ class Wrack::Receiver
             value
           end
         rescue => e
-          $stderr.puts "Aborted while attempting restriction!"
-          $stderr.puts e
+          $stderr.puts "Aborted while attempting restriction: #{e}"
           $stderr.puts e.backtrace
           nil
         end
@@ -60,8 +59,8 @@ class Wrack::Receiver
         @matches.each {|match| @context.instance_exec(msg, &match) }
         @receivers.each {|receiver| receiver.notify(msg) }
       rescue => e
-        $stderr.puts e
-        $stderr.puts e.backtrace
+          $stderr.puts "Aborted while notifying receivers: #{e}"
+          $stderr.puts e.backtrace
       end
     end
   end

@@ -46,7 +46,7 @@ module Wrack
 
         if esock.length > 0
           # XXX This is shit. Fix.
-          $stderr.puts("Generic vague socket error message!")
+          $stderr.puts "Connection reported error, disconnecting."
           disconnect
           nil
         end
