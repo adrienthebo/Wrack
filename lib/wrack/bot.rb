@@ -1,14 +1,17 @@
-# Wrack DSL
+# Wrack bot implentation
 #
-# Because yaml is hard, and DSLs are cheap
+# Implements a simple DSL to instantiate a connection to a server
+# and register plugins for that connection.
+
 require 'wrack'
-require 'wrack/dsl'
+require 'wrack/connection'
+require 'wrack/session'
 
 module Wrack
   class Bot
     def initialize(&block)
-      Struct.new(Server, :server, :port, :ssl)
-      Struct.new(User, :realname :hostname, :servername, :fullname)
+      Struct.new("Server", :server, :port, :ssl)
+      Struct.new("User", :realname, :hostname, :servername, :fullname)
       @server     = Struct::Server.new
       @user       = Struct::User.new
       @klasses    = []
@@ -31,13 +34,13 @@ module Wrack
     end
 
     def register(klass)
-      @plugins << klass
+      @klasses << klass
     end
 
     def run!
-      @connection = Wrack::Connection.new
-      @connection.server = @server.server
-      @connection.port   = @server.port
+      connection = Wrack::Connection.new
+      connection.server = @server.server
+      connection.port   = @server.port
 
       @session = Wrack::Session.new(:logging => true, :connection => connection)
       @session.connect
@@ -49,11 +52,11 @@ module Wrack
       # XXX Destroy all plugins
 
       # Instantiate all plugins
-      @klasses.each do |klass| 
+      @klasses.each do |klass|
         plugin = klass.new
         plugin.bot = self
 
-        plugin << plugins
+        @plugins << plugin
       end
     end
   end

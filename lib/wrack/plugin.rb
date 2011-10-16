@@ -6,6 +6,10 @@
 # Generates the necessary functionality for other classes to instantiate
 # plugin instances.
 
+require 'wrack/irc'
+require 'wrack/receiver'
+require 'wrack/pluginbase'
+
 module Wrack
   module Plugin
     # Does this need to include the following to make plugins automagic?
@@ -13,6 +17,7 @@ module Wrack
 
     # Register all plugins upon creation
     def self.included(klass)
+      klass.extend Wrack::PluginBase
       @klasses ||= []
       @klasses << klass
     end
@@ -22,19 +27,16 @@ module Wrack
       @klasses.dup
     end
 
-    # Provide default constructor
-    # XXX Will this even work?
-    #
-    # Am I on crack?
-    #
-    #def initialize(restrictions = {})
-    #  @restrictions = {}
-    #end
-
-    # Allow plugins to access the instantiating bot
     attr_accessor :bot
-    def receive(&block)
-      puts "I am #{self.inspect}"
+
+    def initialize(restrictions = {})
+      @receivers = []
+      self.class.bare_receivers.each do |r|
+        # TODO merge class level restrictions and r[:options]
+        receiver = Wrack::Receiver.new(self, r[:options], &r[:block])
+        @receivers << receiver
+      end
+      @restrctions = restrictions
     end
   end
 end

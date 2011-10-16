@@ -44,7 +44,7 @@ module Wrack
 
         match do |msg|
           msg.message.match(/nick\s+(.*)\s+(.+)/)
-          privmsg $1 $2
+          privmsg $1, $2
         end
       end
     end
