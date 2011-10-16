@@ -7,7 +7,7 @@ module Wrack
     include Wrack::IRC::Commands
 
     def initialize(options = {})
-      @connection = (options[:connection] || Wrack::Connection).send(:new)
+      @connection = (options[:connection] || Wrack::Connection.new)
       @callbacks  = {}
       @receivers  = []
 

@@ -1,4 +1,5 @@
 require 'wrack/connection'
+require 'wrack/connection/ssl'
 require 'wrack/session'
 require 'wrack/receiver'
-require 'wrack/dsl'
+require 'wrack/bot'

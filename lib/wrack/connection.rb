@@ -18,13 +18,7 @@ module Wrack
     def connect
       @connection = TCPSocket.new(server, port)
       if @connection
-
-        %w{INT TERM QUIT}.each do |signal|
-          Signal.trap(signal) do
-            disconnect
-            Signal.trap(signal, "DEFAULT")
-          end
-        end
+        set_signals
       end
     end
 
@@ -106,6 +100,15 @@ module Wrack
     def fire_callbacks(type, raw)
       @callbacks[type].each do |callback|
         fire_callback(callback, raw)
+      end
+    end
+
+    def set_signals
+      %w{INT TERM QUIT}.each do |signal|
+        Signal.trap(signal) do
+          disconnect
+          Signal.trap(signal, "DEFAULT")
+        end
       end
     end
   end
