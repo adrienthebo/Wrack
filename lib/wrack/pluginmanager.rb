@@ -3,8 +3,6 @@ require 'wrack'
 require 'wrack/irc'
 module Wrack
   class PluginManager
-    include Wrack::IRC::Commands
-
     attr_reader :connection
     def initialize(options = {})
       @connection = (options[:connection] || Wrack::Connection.new)
@@ -28,11 +26,11 @@ module Wrack
     private
 
     def register_logger
-      @connection.register_callback([:read, :write]) {|connection, raw| puts raw }
+      connection.register_callback([:read, :write]) {|connection, raw| puts raw }
     end
 
     def register_read_handler
-      @connection.register_callback(:read) {|connection, raw| on_read(raw) }
+      connection.register_callback(:read) {|connection, raw| on_read(raw) }
     end
 
     def on_read(raw)
