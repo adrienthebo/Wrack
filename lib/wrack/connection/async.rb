@@ -17,10 +17,10 @@ module Wrack
     protected
 
     # Reimpements the fire_callbacks to be threaded.
-    def fire_callback(callback, msg)
+    def fire_callback(callback, *args)
       Thread.new do
         begin
-          callback.call(self, msg)
+          callback.call(self, *args)
         rescue => details
           $stderr.puts "Error with callback #{callback}: #{details}"
           $stderr.puts details.backtrace

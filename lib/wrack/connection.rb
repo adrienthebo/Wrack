@@ -3,15 +3,16 @@
 # This class handles the low level details of a tcp socket. It's a barebones
 # pluggable system that pushes all implementation details into callbacks
 require 'socket'
+require 'wrack'
 module Wrack
   class Connection
     attr_accessor :server, :port, :options
 
-    def initialize(server="", port=6667, options={})
+    def initialize(server = "", port = 6667, options = {})
       @server = server
       @port   = port
       @options = options
-      @callbacks = {:read => [], :write => [], :err => []}
+      @callbacks = {:read => [], :write => [], :err => [], :connect => [], :disconnect => []}
     end
 
     # Attempts to establish a tcp connection
@@ -19,12 +20,14 @@ module Wrack
       @connection = TCPSocket.new(server, port)
       if @connection
         set_signals
+        fire_callbacks(:connect)
       end
     end
 
     # Drop the connection to the server cleanly
     def disconnect
       if connected?
+        fire_callbacks(:disconnect)
         @connection.close
         @connection = nil
       end
@@ -72,7 +75,7 @@ module Wrack
         # FIXME Return early? Really?
         return callback_type.each { |sym| register_callback(sym, options, &block) }
       when Symbol
-        unless [:read, :write, :err].include? callback_type
+        unless [:read, :write, :err, :connect, :disconnect].include? callback_type
           raise ArgumentError, "register_callback requires a callback_type of either :read, :write, :err, or array thereof."
         end
       end
@@ -87,10 +90,16 @@ module Wrack
 
     private
 
-    # TODO Add the ability to pass a module/class/block to this and have
-    # The Right Thing be done.
+    # XXX instead of a single raw argument, use *args to allow callback
+    # triggers to pass arbitrary args
     def fire_callback(callback, raw)
       begin
+        # XXX Instead of callback.call, perhaps this:
+        #
+        #     @context.instance_exec *args
+        #
+        # Doing instance_exec would remove the need to pass in connection
+        # explicitly
         callback.call(self, raw)
       rescue => details
         $stderr.puts "Error with callback #{callback}: #{details}"
@@ -98,9 +107,9 @@ module Wrack
       end
     end
 
-    def fire_callbacks(type, raw)
+    def fire_callbacks(type, *args)
       @callbacks[type].each do |callback|
-        fire_callback(callback, raw)
+        fire_callback(callback, *args)
       end
     end
 
