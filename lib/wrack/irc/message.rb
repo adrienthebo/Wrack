@@ -2,7 +2,7 @@
 module Wrack
   module IRC
     class Message
-      attr_reader :prefix, :command, :params
+      attr_reader :prefix, :command, :params, :raw
 
       def self.parse(raw)
 
@@ -10,7 +10,7 @@ module Wrack
         if @subclasses and can_parse = @subclasses.find {|sub| sub.parse(raw)}
           can_parse.parse(raw)
         elsif raw.match(/^(?::(\S+)\s+)?(\S+)\s*(.*)/)
-          new(:prefix => $1, :command => $2, :params => $3)
+          new(:prefix => $1, :command => $2, :params => $3, :raw => raw)
         end
       end
 
@@ -24,6 +24,7 @@ module Wrack
         @command = canonize(options[:command])
         @params  = options[:params]
         @prefix  = options[:prefix]
+        @raw     = options[:raw]
       end
 
       def canonize(name)

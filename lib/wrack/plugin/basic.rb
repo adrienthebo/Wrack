@@ -5,6 +5,15 @@ module Wrack
       include Wrack::Plugin
 
       receive do
+        restrict :message => "quit"
+
+        match do |msg|
+          quit
+          disconnect
+        end
+      end
+
+      receive do
         restrict :message => /join (?:#\S+)/
 
         match do |msg|

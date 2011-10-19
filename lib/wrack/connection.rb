@@ -88,8 +88,6 @@ module Wrack
 
     private
 
-    # XXX instead of a single raw argument, use *args to allow callback
-    # triggers to pass arbitrary args
     def fire_callback(callback_hash, *args)
       begin
         # XXX Instead of callback.call, perhaps this:

@@ -15,57 +15,74 @@ module Wrack
   #
   # This is necessary to make the class level DSL function
   module PluginBase
-    def receive(options = {}, &block)
-      # XXX will the self context be all fucked for this?
-      # Do we need to pass in the instance that is defined in, somehow?
-      bare_receivers << {:options => options, :block => block}
+    def receive(restrictions = {}, &block)
+      bare_receivers << {:restrictions => restrictions, :block => block}
     end
 
-    def connection(&block)
-      bare_connections << block
+    def on_initialize(&block)
+       initializers << block
     end
 
     def bare_receivers
       @bare_receivers ||= []
     end
 
-    def bare_connections
-      @bare_connections ||= []
+    def initializers
+      @initializers ||= []
     end
   end
 
   module Plugin
     include Wrack::IRC::Commands
 
-    # Modify all plugins to include the class level methods, and register
-    # them for subsequent lookup
-    def self.included(klass)
-      klass.extend Wrack::PluginBase
-      @klasses ||= []
-      @klasses << klass
-    end
+    class << self
+      # Modify all plugins to include the class level methods, and register
+      # them for subsequent lookup
+      def included(klass)
+        klass.extend Wrack::PluginBase
+        @klasses ||= []
+        @klasses << klass unless @klasses.include? klass
+      end
 
-    # Expose all registered plugins
-    def self.registered
-      @klasses.dup
+      # Expose all registered plugins
+      def registered
+        @klasses.dup
+      end
+
+      def paths
+        @paths ||= []
+      end
+
+      def load(path)
+        paths << path
+        Kernel.load path
+      end
+
+      def reload_all
+        @paths.each { |path| Kernel.load path }
+      end
     end
 
     attr_accessor :receivers
     attr_accessor :connection
+    attr_accessor :bot
 
     # Defines a default constructor to copy all receivers generated during
     # class instantiation into the object
-    def initialize(connection, restrictions = {})
+    def initialize(connection, bot, restrictions = {})
       @connection = connection
-      @receivers = []
+      @bot        = bot
+      @receivers  = []
+
+      # Instantiate all class level receivers for this instance
       self.class.bare_receivers.each do |r|
-        # TODO merge class level restrictions and r[:options]
-        receiver = Wrack::Receiver.new(self, r[:options], &r[:block])
+        receiver = Wrack::Receiver.new(self, r[:restrictions].merge(restrictions), &r[:block])
         @receivers << receiver
       end
 
-      self.class.bare_connections.each do |block|
-        instance_exec @connection, &block
+      # Evaluate all instance blocks
+      self.class.initializers.each do |block|
+        instance_exec &block
       end
     end
   end

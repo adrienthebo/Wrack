@@ -10,9 +10,11 @@ require 'wrack/pluginmanager'
 module Wrack
   class Bot
 
+    attr_accessor :server, :user
+
     def initialize(&block)
       Struct.new("Server", :server, :port, :ssl)
-      Struct.new("User", :realname, :hostname, :servername, :fullname)
+      Struct.new("User", :nick, :realname, :hostname, :servername, :fullname)
       @server  = Struct::Server.new
       @user    = Struct::User.new
       @klasses = []
@@ -32,11 +34,11 @@ module Wrack
       @logging = log
     end
 
-    def server
+    def configure_server
       yield @server
     end
 
-    def user
+    def configure_user
       yield @user
     end
 
@@ -49,7 +51,9 @@ module Wrack
       @connection.server = @server.server
       @connection.port   = @server.port
 
-      @manager = Wrack::PluginManager.new(:logging => @logging, :connection => @connection)
+      # TODO add internal operations plugin manager
+
+      @manager = Wrack::PluginManager.new(:connection => @connection)
 
       reload_plugins!
       @connection.connect
@@ -68,7 +72,7 @@ module Wrack
 
       # Instantiate all plugins
       @klasses.each do |klass|
-        plugin = klass.new @connection
+        plugin = klass.new @connection, self
 
         @manager.register_plugin plugin
         @plugins << plugin

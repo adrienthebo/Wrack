@@ -8,12 +8,6 @@ module Wrack
       @connection = (options[:connection] || Wrack::Connection.new)
       @plugins    = []
 
-      # See if we should turn on logging
-      if options[:logging]
-        connection.register_callback(self, :read)  {|raw| puts "<- #{raw}" }
-        connection.register_callback(self, :write) {|raw| puts "-> #{raw}" }
-      end
-
       # Initialize IRC level callback mechanism
       connection.register_callback(self, :read) {|raw| on_read(raw) }
     end
