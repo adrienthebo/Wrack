@@ -15,12 +15,22 @@ module Wrack
   #
   # This is necessary to make the class level DSL function
   module PluginBase
-    attr_reader :bare_receivers
     def receive(options = {}, &block)
       # XXX will the self context be all fucked for this?
       # Do we need to pass in the instance that is defined in, somehow?
+      bare_receivers << {:options => options, :block => block}
+    end
+
+    def connection(&block)
+      bare_connections << block
+    end
+
+    def bare_receivers
       @bare_receivers ||= []
-      @bare_receivers << {:options => options, :block => block}
+    end
+
+    def bare_connections
+      @bare_connections ||= []
     end
   end
 
@@ -45,14 +55,18 @@ module Wrack
 
     # Defines a default constructor to copy all receivers generated during
     # class instantiation into the object
-    def initialize(restrictions = {})
+    def initialize(connection, restrictions = {})
+      @connection = connection
       @receivers = []
       self.class.bare_receivers.each do |r|
         # TODO merge class level restrictions and r[:options]
         receiver = Wrack::Receiver.new(self, r[:options], &r[:block])
         @receivers << receiver
       end
-      @restrictions = restrictions
+
+      self.class.bare_connections.each do |block|
+        instance_exec @connection, &block
+      end
     end
   end
 end

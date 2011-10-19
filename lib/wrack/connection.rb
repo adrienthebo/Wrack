@@ -12,12 +12,18 @@ module Wrack
       @server = server
       @port   = port
       @options = options
-      @callbacks = {:read => [], :write => [], :err => [], :connect => [], :disconnect => []}
+      @options[:sep] ||= "\r\n"
+      @options[:select_timeout] ||= 0
+
+      @known_callbacks = [:read, :write, :err, :connect, :disconnect]
+      @callbacks = {}
+
+      @known_callbacks.each { |callback| @callbacks[callback] = [] }
     end
 
     # Attempts to establish a tcp connection
     def connect
-      @connection = TCPSocket.new(server, port)
+      @connection = TCPSocket.open(server, port)
       if @connection
         set_signals
         fire_callbacks(:connect)
@@ -39,60 +45,52 @@ module Wrack
 
     def write(raw)
       fire_callbacks(:write, raw)
-      @connection.print raw, "\r\n"
+      @connection.print raw, @options[:sep]
     end
 
     # Poll socket for messages.
     def poll
       begin
-        rsock, wsock, esock = Kernel.select([@connection], nil, [@connection], options[:select_timeout])
+        rsock, wsock, esock = Kernel.select([@connection], nil, [@connection], @options[:select_timeout])
 
-        if esock.length > 0
-          # XXX This is shit. Fix.
-          $stderr.puts "Connection reported error, disconnecting."
+        if esock and esock.length > 0
+          $stderr.puts "Wrack::Connection#poll reported socket error, disconnecting."
           disconnect
           nil
         end
 
-        if rsock.length > 0
+        if rsock and rsock.length > 0
           raw = rsock[0].gets.chomp
           fire_callbacks(:read, raw)
         end
-      rescue IOError
-        nil
+      rescue IOError => e
+        if @signal_exit
+          nil
+        else
+          raise e
+        end
       end
     end
 
-    # Takes either an object that responds to a callback or a block that
-    # receives a single argument
-    # XXX Remove array callback_type to simplify this method?
-    def register_callback(callback_type, options = {}, &block)
-      # Validate type
-      case callback_type
-      when Array
-        # If we've been given an array of types to apply the callback,
-        # recursively call them all
-        # FIXME Return early? Really?
-        return callback_type.each { |sym| register_callback(sym, options, &block) }
-      when Symbol
-        unless [:read, :write, :err, :connect, :disconnect].include? callback_type
-          raise ArgumentError, "register_callback requires a callback_type of either :read, :write, :err, or array thereof."
-        end
+    def register_callback(context, callback_types, &block)
+
+      # Smash all types into a single array
+      callback_types = [callback_types].flatten
+
+      unless callback_types.all? {|c| @known_callbacks.include? c}
+        raise ArgumentError, "Attempted to register callback with unknown type(s) #{callback_types}"
       end
 
-      blob = if block_given?
-        block
-      else
-        options[:callback]
+      callback_types.each do |callback_type|
+        @callbacks[callback_type] << {:block => block, :context => context}
       end
-      @callbacks[callback_type] << blob
     end
 
     private
 
     # XXX instead of a single raw argument, use *args to allow callback
     # triggers to pass arbitrary args
-    def fire_callback(callback, raw)
+    def fire_callback(callback_hash, *args)
       begin
         # XXX Instead of callback.call, perhaps this:
         #
@@ -100,16 +98,20 @@ module Wrack
         #
         # Doing instance_exec would remove the need to pass in connection
         # explicitly
-        callback.call(self, raw)
+
+        context = callback_hash[:context]
+        block = callback_hash[:block]
+
+        context.instance_exec(args, &block)
       rescue => details
-        $stderr.puts "Error with callback #{callback}: #{details}"
+        $stderr.puts "Error with callback #{block}: #{details}"
         $stderr.puts details.backtrace
       end
     end
 
-    def fire_callbacks(type, *args)
-      @callbacks[type].each do |callback|
-        fire_callback(callback, *args)
+    def fire_callbacks(callback_type, *args)
+      @callbacks[callback_type].each do |callback_hash|
+        fire_callback(callback_hash, *args)
       end
     end
 
@@ -120,6 +122,7 @@ module Wrack
     def set_signals
       %w{INT TERM QUIT}.each do |signal|
         Signal.trap(signal) do
+          @signal_exit = true
           disconnect
           Signal.trap(signal, "DEFAULT")
         end

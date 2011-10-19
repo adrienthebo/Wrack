@@ -9,6 +9,7 @@ require 'wrack/pluginmanager'
 
 module Wrack
   class Bot
+
     def initialize(&block)
       Struct.new("Server", :server, :port, :ssl)
       Struct.new("User", :realname, :hostname, :servername, :fullname)
@@ -17,12 +18,18 @@ module Wrack
       @klasses = []
       @plugins = []
 
+      @logging = false
+
       configure &block if block_given?
     end
 
     def configure(&block)
       instance_eval &block
       self
+    end
+
+    def logging(log)
+      @logging = log
     end
 
     def server
@@ -38,14 +45,19 @@ module Wrack
     end
 
     def run!
-      @connection = Wrack::Connection.new
+      @connection = Wrack::Connection.new :select_timeout => 0
       @connection.server = @server.server
       @connection.port   = @server.port
 
-      @manager = Wrack::PluginManager.new(:logging => true, :connection => @connection)
-
+      @manager = Wrack::PluginManager.new(:logging => @logging, :connection => @connection)
 
       reload_plugins!
+      @connection.connect
+      @connection.background!
+    end
+
+    def running?
+      @connection.connected?
     end
 
     def reload_plugins!
@@ -56,8 +68,7 @@ module Wrack
 
       # Instantiate all plugins
       @klasses.each do |klass|
-        plugin = klass.new
-        plugin.connection = @connection
+        plugin = klass.new @connection
 
         @manager.register_plugin plugin
         @plugins << plugin

@@ -10,20 +10,26 @@ module Wrack
   class Connection
     def background!
       Thread.new do
-        poll while connected?
+        begin
+          poll while connected?
+        rescue => e
+          $stderr.puts "Error while background polling: #{e}"
+          $stderr.puts e.backtrace
+        end
       end
     end
 
     protected
 
-    # Reimpements the fire_callbacks to be threaded.
-    def fire_callback(callback, *args)
-      Thread.new do
-        begin
-          callback.call(self, *args)
-        rescue => details
-          $stderr.puts "Error with callback #{callback}: #{details}"
-          $stderr.puts details.backtrace
+    def fire_callbacks(callback_type, *args)
+      @callbacks[callback_type].each do |callback_hash|
+        Thread.new do
+          begin
+            fire_callback(callback_hash, *args)
+          rescue => e
+            $stderr.puts "Error while triggering callback: #{e}"
+            $stderr.puts e.backtrace
+          end
         end
       end
     end

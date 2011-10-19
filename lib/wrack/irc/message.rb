@@ -7,8 +7,8 @@ module Wrack
       def self.parse(raw)
 
         # Attempt to match any subclass methods against this
-        if @subclasses and blargh = @subclasses.find {|sub| sub.parse(raw)}
-          blargh.parse(raw)
+        if @subclasses and can_parse = @subclasses.find {|sub| sub.parse(raw)}
+          can_parse.parse(raw)
         elsif raw.match(/^(?::(\S+)\s+)?(\S+)\s*(.*)/)
           new(:prefix => $1, :command => $2, :params => $3)
         end

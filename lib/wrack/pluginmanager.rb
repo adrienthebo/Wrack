@@ -9,10 +9,13 @@ module Wrack
       @plugins    = []
 
       # See if we should turn on logging
-      register_logger if options[:logging]
+      if options[:logging]
+        connection.register_callback(self, :read)  {|raw| puts "<- #{raw}" }
+        connection.register_callback(self, :write) {|raw| puts "-> #{raw}" }
+      end
 
       # Initialize IRC level callback mechanism
-      register_read_handler
+      connection.register_callback(self, :read) {|raw| on_read(raw) }
     end
 
     def register_plugin(plugin)
@@ -25,15 +28,8 @@ module Wrack
 
     private
 
-    def register_logger
-      connection.register_callback([:read, :write]) {|connection, raw| puts raw }
-    end
-
-    def register_read_handler
-      connection.register_callback(:read) {|connection, raw| on_read(raw) }
-    end
-
     def on_read(raw)
+      raw = raw[0]
       if message = Wrack::IRC::Message.parse(raw)
         @plugins.each do |plugin|
           plugin.receivers.each {|receiver| receiver.notify(message) }
