@@ -11,12 +11,8 @@ module Wrack
         receive do
           restrict :message => /reload/
           match do |msg|
-            paths = Wrack::Plugin.paths.dup
-
-            paths.each do |path|
-              privmsg msg.sender, "Reloading #{path}" 
-              Wrack::Plugin.load path
-            end
+            puts "Reloading all plugins"
+            Wrack::Plugin.loader.reload_known_plugins!
             bot.reload_plugins!
           end
         end

@@ -8,6 +8,7 @@
 
 require 'wrack/irc'
 require 'wrack/receiver'
+require 'wrack/pluginloader'
 
 module Wrack
 
@@ -49,17 +50,8 @@ module Wrack
         @klasses.dup
       end
 
-      def paths
-        @paths ||= []
-      end
-
-      def load(path)
-        paths << path
-        Kernel.load path
-      end
-
-      def reload_all
-        @paths.each { |path| Kernel.load path }
+      def loader
+        @loader ||= Wrack::PluginLoader.new
       end
     end
 
