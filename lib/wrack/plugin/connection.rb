@@ -2,7 +2,7 @@
 module Wrack
   module Plugin
     class Connection
-      include Wrack::Plugin
+      include Wrack::PluginBase
 
       on_initialize do
         connection.register_callback(self, :connect) do

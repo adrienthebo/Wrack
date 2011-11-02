@@ -4,7 +4,7 @@ require 'wrack'
 module Wrack
   module Plugin
     class Plugin
-      include Wrack::Plugin
+      include Wrack::PluginBase
       receive do
         restrict :message => /^!plugin/
 

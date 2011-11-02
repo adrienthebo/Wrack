@@ -1,8 +1,9 @@
+require 'wrack'
 
 module Wrack
   module Plugin
     class Basic
-      include Wrack::Plugin
+      include Wrack::PluginBase
 
       receive do
         restrict :message => "quit"

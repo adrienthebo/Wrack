@@ -17,15 +17,10 @@ module Wrack
       @sem.synchronize do
         begin
           $stderr.puts "Loading file #{file}"
-          preload_plugins = Wrack::Plugin.registered
           Kernel.load file
-          postload_plugins = Wrack::Plugin.registered
-
-          # Associate which plugins were loaded from the files
-          @plugin_files[file] = (postload_plugins - preload_plugins)
-          puts @plugin_files
         rescue => e
-          $stderr.puts "Error while loading plugin file #{plugin_file}: #{e}"
+          $stderr.puts "Error while loading plugin file #{file}: #{e}"
+          $stderr.puts e.backtrace
         end
       end
     end
