@@ -14,11 +14,13 @@ module Wrack
       end
 
       def load_plugin(klass, bot)
+        puts "Loading #{klass} instance"
         @plugins << klass.new(@connection, bot)
       end
 
       def unload_plugin(klass)
         targets = @plugins.select {|plugin| plugin.is_a? klass}
+        puts "Unloading all #{klass} instances"
         @plugins -= targets
       end
 

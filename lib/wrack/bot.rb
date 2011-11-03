@@ -7,17 +7,21 @@ require 'wrack'
 require 'wrack/connection'
 require 'wrack/bot/pluginmanager'
 
+require 'wrack/plugin/logging'
+require 'wrack/plugin/connection'
+
 module Wrack
   class Bot
 
     attr_accessor :server, :user
+    attr_accessor :manager
 
     def initialize(&block)
       Struct.new("Server", :server, :port, :ssl)
       Struct.new("User", :nick, :realname, :hostname, :servername, :fullname)
       @server  = Struct::Server.new
       @user    = Struct::User.new
-      @klasses = []
+      @klass_names = []
 
       configure &block if block_given?
     end
@@ -35,8 +39,8 @@ module Wrack
       yield @user
     end
 
-    def register(klass)
-      @klasses << klass
+    def register(sym)
+      @klass_names << sym
     end
 
     def run!
@@ -44,11 +48,13 @@ module Wrack
       @connection.server = @server.server
       @connection.port   = @server.port
 
-      # TODO add internal operations plugin manager
+      @internal = Wrack::Bot::PluginManager.new(:connection => @connection)
+      @internal.load_plugin Wrack::Plugin::Logging, self
+      @internal.load_plugin Wrack::Plugin::Connection, self
 
       @manager = Wrack::Bot::PluginManager.new(:connection => @connection)
 
-      reload_plugins!
+      load_plugins
       @connection.connect
       @connection.background!
     end
@@ -57,11 +63,18 @@ module Wrack
       @connection.connected?
     end
 
-    def reload_plugins!
-      @klasses.each { |klass| @manager.unload_plugin klass }
+    def unload_plugins
+      @klass_names.each do |sym|
+        klass = Wrack::Plugin.get_plugin sym
+        @manager.unload_plugin klass
+      end
+    end
 
-      # Instantiate all plugins
-      @klasses.each { |klass| @manager.load_plugin klass, self }
+    def load_plugins
+      @klass_names.each do |sym|
+        klass = Wrack::Plugin.get_plugin sym
+        @manager.load_plugin klass, self
+      end
     end
   end
 end

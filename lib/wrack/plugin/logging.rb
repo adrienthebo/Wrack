@@ -1,4 +1,5 @@
 
+require 'wrack/pluginbase'
 module Wrack
   module Plugin
     class Logging

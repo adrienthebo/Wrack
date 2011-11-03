@@ -15,7 +15,8 @@ module Wrack
             privmsg msg.sender, out.inspect
           rescue => e
             privmsg msg.sender, e
-            e.backtrace.each { |line| privmsg msg.sender, line }
+            $stderr.puts e
+            $stderr.puts e.backtrace
           end
         end
       end
