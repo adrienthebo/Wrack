@@ -5,7 +5,7 @@
 
 require 'wrack'
 require 'wrack/connection'
-require 'wrack/pluginmanager'
+require 'wrack/bot/pluginmanager'
 
 module Wrack
   class Bot
@@ -52,7 +52,7 @@ module Wrack
 
       # TODO add internal operations plugin manager
 
-      @manager = Wrack::PluginManager.new(:connection => @connection)
+      @manager = Wrack::Bot::PluginManager.new(:connection => @connection)
 
       reload_plugins!
       @connection.connect
