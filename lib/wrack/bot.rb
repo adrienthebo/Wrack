@@ -19,18 +19,12 @@ module Wrack
       @user    = Struct::User.new
       @klasses = []
 
-      @logging = false
-
       configure &block if block_given?
     end
 
     def configure(&block)
       instance_eval &block
       self
-    end
-
-    def logging(log)
-      @logging = log
     end
 
     def configure_server
