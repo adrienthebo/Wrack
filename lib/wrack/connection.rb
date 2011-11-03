@@ -13,7 +13,7 @@ module Wrack
       @port   = port
       @options = options
       @options[:sep] ||= "\r\n"
-      @options[:select_timeout] ||= 0
+      @options[:select_timeout] = 10
 
       @known_callbacks = [:read, :write, :err, :connect, :disconnect]
       @callbacks = {}
