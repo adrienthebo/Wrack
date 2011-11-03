@@ -10,14 +10,13 @@ require 'wrack'
 require 'wrack/irc'
 require 'wrack/plugin'
 require 'wrack/receiver'
-require 'wrack/pluginloader'
+require 'wrack/loader'
 
 module Wrack
 
   module PluginBase
 
-    # Defines the class methods that backs plugin generated
-    #
+    # Defines the class methods that backs plugin generation
     # This is necessary to make the class level DSL function
     module ClassMethods
       def receive(restrictions = {}, &block)
@@ -41,10 +40,10 @@ module Wrack
 
     # Modify all plugins to include the class level methods, and register
     # them for subsequent lookup
+    # If this module is included instead of built with Wrack::Plugin, then it
+    # must register itself.
     def self.included(klass)
       klass.extend Wrack::PluginBase::ClassMethods
-      # XXX Make this a manual operation if not using a hot plugin?
-      #Wrack::Plugin.register klass
     end
 
     attr_accessor :receivers

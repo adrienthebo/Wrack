@@ -12,12 +12,13 @@ module Wrack
       connection.register_callback(self, :read) {|raw| on_read(raw) }
     end
 
-    def register_plugin(plugin)
-      @plugins << plugin
+    def load_plugin(klass, bot)
+      @plugins << klass.new(@connection, bot)
     end
 
-    def unregister_plugin(plugin)
-      @plugins.delete plugin
+    def unload_plugin(klass)
+      targets = @plugins.select {|plugin| plugin.is_a? klass}
+      @plugins -= targets
     end
 
     private

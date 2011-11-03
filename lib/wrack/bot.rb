@@ -18,7 +18,6 @@ module Wrack
       @server  = Struct::Server.new
       @user    = Struct::User.new
       @klasses = []
-      @plugins = []
 
       @logging = false
 
@@ -65,18 +64,10 @@ module Wrack
     end
 
     def reload_plugins!
-      @plugins.each do |plugin|
-        @manager.unregister_plugin plugin
-        @plugins.delete plugin
-      end
+      @klasses.each { |klass| @manager.unload_plugin klass }
 
       # Instantiate all plugins
-      @klasses.each do |klass|
-        plugin = klass.new @connection, self
-
-        @manager.register_plugin plugin
-        @plugins << plugin
-      end
+      @klasses.each { |klass| @manager.load_plugin klass, self }
     end
   end
 end

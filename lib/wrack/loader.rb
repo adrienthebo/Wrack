@@ -2,7 +2,7 @@
 require 'thread'
 
 module Wrack
-  class PluginLoader
+  class Loader
 
     def initialize
       @plugin_files = Hash.new(Array.new)
@@ -17,7 +17,13 @@ module Wrack
       @sem.synchronize do
         begin
           $stderr.puts "Loading file #{file}"
+          preload_plugins = Wrack::Plugin.registered
           Kernel.load file
+          postload_plugins = Wrack::Plugin.registered
+
+          # Associate which plugins were loaded from the files
+          @plugin_files[file] = (postload_plugins - preload_plugins)
+          puts "Loaded plugins #{@plugin_files[file].join(", ")} from #{file}"
         rescue => e
           $stderr.puts "Error while loading plugin file #{file}: #{e}"
           $stderr.puts e.backtrace
